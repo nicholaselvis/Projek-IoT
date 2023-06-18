@@ -1,0 +1,80 @@
+#define BLYNK_TEMPLATE_ID "TMPL6Jga9HoBf"
+#define BLYNK_TEMPLATE_NAME "Proyek1"
+#define BLYNK_AUTH_TOKEN "dm_QQuqRM6LHHhoMEEsU8JuhDJpPVH9R"
+
+#define TRIGGER D1
+#define ECHO D2
+
+#include <BlynkSimpleEsp8266.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+BlynkTimer timer;
+
+char auth[]=BLYNK_AUTH_TOKEN;
+char ssid[]="IPHONE 12 Promax";
+char pw[]="kanatafi11";
+
+int LEDR = D3;
+int buzzerPin = D4;
+int buzzerSw=0;
+
+BLYNK_WRITE(V1){
+  int pin=param.asInt();
+  Serial.println(pin);
+  if(pin==1){
+    buzzerSw=1;
+  }else{
+    buzzerSw=0;
+  }
+}
+
+void sendSensor(){
+
+  long durasi, jarak;
+  digitalWrite(TRIGGER, LOW);
+  delay(10);
+  digitalWrite(TRIGGER, HIGH);
+  delay(10);
+  digitalWrite(TRIGGER, LOW);
+  durasi=pulseIn(ECHO, HIGH);
+  jarak=(durasi/2)/29.1;
+  Serial.print(jarak);
+  Serial.println(" cm");
+  Blynk.virtualWrite(V0,jarak);
+  if(buzzerSw==1){
+    if(jarak<20){
+      Serial.println("Jarak Terlalu Dekat");
+      digitalWrite(LEDR, HIGH);
+      tone(buzzerPin, 500, 100);
+    }else{
+      digitalWrite(LEDR, LOW);
+      noTone(buzzerPin);
+    }   
+  }else if(buzzerSw==0){
+      if(jarak<10){
+      Serial.println("Jarak Terlalu Dekat");
+      digitalWrite(LEDR, HIGH);
+    }else{
+      digitalWrite(LEDR, LOW);
+        }
+    }
+}
+
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(TRIGGER, OUTPUT);
+  pinMode(ECHO, INPUT);
+  pinMode(LEDR, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
+  Blynk.begin(auth, ssid, pw);
+  timer.setInterval(2500L, sendSensor);
+}
+
+void loop() {
+  // put your main code here, to run repeatedly:
+  Blynk.run();
+  timer.run();
+  sendSensor();
+  delay(100);
+}
